@@ -155,7 +155,9 @@ class ChatbotService {
       return '🏛️ TrustBridge\n\n1. Report Issue\n2. View Reports\n3. Help';
     }
 
-    if (message.toLowerCase() === 'my reports' || message.toLowerCase() === '2') {
+    // REMOVED: Global "2" check - this was causing issues when user selects category "2" (Infrastructure)
+    // "View Reports" should only work in INITIAL state, handled in the switch statement below
+    if (message.toLowerCase() === 'my reports' && state === STATES.INITIAL) {
       await new Promise((resolve, reject) => {
         UserSession.set(phone_number, STATES.INITIAL, {}, (err) => {
           if (err) reject(err);
@@ -1253,21 +1255,17 @@ class ChatbotService {
         }
 
         if (reports.length === 0) {
-          // Use AI to generate no reports message
-          if (aiService.model) {
-            const noReportsMsg = await aiService.generateResponse(
-              'The user has no reports yet. Encourage them to report an issue and explain how to do it.',
-              {
-                phone_number,
-                state: 'no_reports',
-                report_data: {},
-                conversation_history: []
-              }
-            );
-            resolve(noReportsMsg || '📋 You have no reports yet. Type *menu* to report an issue.');
-          } else {
-            resolve('📋 You have no reports yet. Type *menu* to report an issue.');
-          }
+          // User has no reports - be clear and helpful, no contradictions
+          const noReportsMsg = await aiService.generateResponse(
+            'The user has no reports yet. Tell them they can report an issue by typing "menu" or "1". Be brief and encouraging. IMPORTANT: Do NOT mention "submitted" - they haven\'t submitted anything yet. Do NOT contradict yourself.',
+            {
+              phone_number,
+              state: 'no_reports',
+              report_data: {},
+              conversation_history: []
+            }
+          );
+          resolve(noReportsMsg || '📋 You have no reports yet. Type *menu* to report an issue.');
           return;
         }
 
