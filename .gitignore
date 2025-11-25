@@ -14,6 +14,9 @@ data/
 *.db-journal
 *.db-wal
 
+# WhatsApp Web.js cache
+.wwebjs_cache/
+
 # Logs
 *.log
 npm-debug.log*
