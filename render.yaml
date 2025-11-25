@@ -1,0 +1,20 @@
+services:
+  - type: web
+    name: trustbridge-bot
+    env: node
+    plan: free
+    buildCommand: npm install
+    startCommand: npm start
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: PORT
+        value: 3000
+      - key: DB_PATH
+        value: ./data/reports.db
+      # Add these in Render dashboard:
+      # ADMIN_PASSWORD=your_secure_password_here
+      # GOOGLE_API_KEY=your_google_api_key_here
+      # GEMINI_MAX_RPM=12
+    healthCheckPath: /health
+
