@@ -55,6 +55,11 @@ app.get('/', (req, res) => {
 // Initialize WhatsApp and start server
 async function startServer() {
   try {
+    // Database initializes automatically when db.js is loaded
+    // Just require it to ensure it's initialized
+    require('./database/db');
+    console.log('✅ Database ready');
+    
     // Initialize WhatsApp client
     console.log('Initializing WhatsApp connection...');
     await whatsappService.initialize();
