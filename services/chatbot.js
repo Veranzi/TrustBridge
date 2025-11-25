@@ -307,21 +307,6 @@ class ChatbotService {
               newState = STATES.DESCRIPTION;
               shouldSave = true;
             }
-          } else if (detectedCategory) {
-            // If AI fails but we detected category, use it
-            report_data.category = detectedCategory;
-            const prompt = await aiService.generateResponse(
-              `User reported ${detectedCategory} issue: "${message}". Ask for more details. Be brief. IMPORTANT: Do NOT mention "submitted" or "submission" - we are just collecting information.`,
-              {
-                phone_number,
-                state: 'description_prompt',
-                report_data,
-                conversation_history: []
-              }
-            );
-            response = prompt || `Please provide more details about this ${detectedCategory} issue:`;
-            newState = STATES.DESCRIPTION;
-            shouldSave = true;
           }
         } else {
           // Not an issue description - show menu immediately
