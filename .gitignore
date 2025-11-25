@@ -1,0 +1,45 @@
+# Dependencies
+node_modules/
+
+# Environment variables (CRITICAL - contains API keys!)
+.env
+.env.local
+.env.production
+.env.development
+.env.*.local
+
+# Data and session files
+data/
+*.db
+*.db-journal
+*.db-wal
+
+# Logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# IDE files
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# Temporary files
+tmp/
+temp/
+*.tmp
+
+# Backup files
+*.bak
+*.backup
+
+# Sensitive documentation (if it contains real keys)
+# SETUP_API_KEY.md
+
