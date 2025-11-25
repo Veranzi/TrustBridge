@@ -161,23 +161,35 @@ class WhatsAppService {
       });
 
       // Message handler - use only 'message' event to prevent duplicates
+      // CRITICAL: Only ONE message event listener to prevent duplicate processing
       this.client.on('message', async (message) => {
-        // Deduplicate: check if we've already processed this message
-        const messageId = message.id?._serialized || message.id || `${message.from}_${message.timestamp}_${message.body?.substring(0, 20)}`;
-        
-        if (this.processedMessages.has(messageId)) {
-          console.log('⚠️ Duplicate message detected, ignoring:', messageId);
+        // Skip if message is from status or group (early return)
+        if (message.from === 'status@broadcast' || message.isGroupMsg) {
           return;
         }
         
-        // Mark as processed (keep last 1000 to prevent memory issues)
+        // Create unique message ID for deduplication
+        // Use serialized ID if available, otherwise create composite ID
+        const messageId = message.id?._serialized || 
+                         message.id || 
+                         `${message.from}_${message.timestamp}_${(message.body || 'media').substring(0, 50)}`;
+        
+        // Check if we've already processed this message (prevent duplicates)
+        if (this.processedMessages.has(messageId)) {
+          console.log('⚠️ Duplicate message detected, ignoring:', messageId.substring(0, 50));
+          return;
+        }
+        
+        // Mark as processed IMMEDIATELY to prevent race conditions
         this.processedMessages.add(messageId);
-        if (this.processedMessages.size > 1000) {
+        
+        // Keep only last 500 messages to prevent memory issues
+        if (this.processedMessages.size > 500) {
           const first = this.processedMessages.values().next().value;
           this.processedMessages.delete(first);
         }
         
-        console.log('🔔 Message event triggered!');
+        console.log('🔔 Processing new message:', messageId.substring(0, 50));
         await this.handleIncomingMessage(message);
       });
 
