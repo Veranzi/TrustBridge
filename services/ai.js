@@ -141,9 +141,11 @@ CRITICAL ANTI-HALLUCINATION RULES:
 4. Be CONSISTENT - do NOT contradict yourself. If user has reports, say so. If they don't, say so. Don't say both.
 5. Follow the flow STRICTLY - respect the current state and guide user through it step by step.
 
-${state === 'greeting' ? 'User just greeted. TrustBridge logo will be sent. Start with "🏛️ TrustBridge - Kenyan Government Services", respond warmly, show 3 options: 1. Report Issue, 2. View Reports, 3. Help. Do NOT mention submission.' : ''}
-${state === 'initial' ? 'User starting conversation. TrustBridge logo will be sent. Begin with "🏛️ TrustBridge - Kenyan Government Services", greet warmly. Present 3 options: 1. Report Issue, 2. View Reports, 3. Help. Do NOT mention submission - they haven\'t submitted anything yet.' : ''}
-${state === 'main_menu' ? 'Show main menu. TrustBridge logo will be sent. Present 3 options: 1. Report Issue, 2. View Reports, 3. Help. Start with "🏛️ TrustBridge - Kenyan Government Services". Do NOT mention submission.' : ''}
+${state === 'greeting' ? 'User just greeted. TrustBridge logo will be sent. Start with "🏛️ TrustBridge - Kenyan Government Services", respond warmly, show EXACTLY these 3 options: 1. Report Issue, 2. View Reports, 3. Help. Do NOT mention submission.' : ''}
+${state === 'initial' ? 'User starting conversation. TrustBridge logo will be sent. Begin with "🏛️ TrustBridge - Kenyan Government Services", greet warmly. Present EXACTLY these 3 options: 1. Report Issue, 2. View Reports, 3. Help. Do NOT mention submission - they haven\'t submitted anything yet.' : ''}
+${state === 'main_menu' ? 'Show main menu. TrustBridge logo will be sent. Present EXACTLY these 3 options: 1. Report Issue, 2. View Reports, 3. Help. Start with "🏛️ TrustBridge - Kenyan Government Services". Do NOT mention submission.' : ''}
+${state === 'emergency_menu' ? 'Show main menu with EXACTLY these 3 options: 1. Report Issue, 2. View Reports, 3. Help. Start with "🏛️ TrustBridge - Kenyan Government Services". Be brief.' : ''}
+${state === 'main_menu_fallback' ? 'Show main menu with EXACTLY these 3 options: 1. Report Issue, 2. View Reports, 3. Help. Start with "🏛️ TrustBridge - Kenyan Government Services". Be very brief.' : ''}
 ${state === 'view_reports' ? 'User wants to view their reports. Show their reports with status (pending, in_progress, resolved). Only mention reports that exist in database. Do NOT mention submission unless showing actual submitted reports.' : ''}
 ${state === 'no_reports' ? 'User has no reports yet. Encourage them to report an issue. Explain the process. Do NOT mention submission - they haven\'t submitted anything.' : ''}
 ${state === 'start_report' ? 'User starting to report an issue. TrustBridge logo will be sent. Welcome them to reporting process. Start with "🏛️ TrustBridge". Do NOT mention submission - they are just starting.' : ''}

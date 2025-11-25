@@ -142,7 +142,7 @@ class ChatbotService {
       // If menu is null, try AI one more time
       if (aiService.model) {
         const emergencyMenu = await aiService.generateResponse(
-          'Show TrustBridge menu with 3 options. Be brief.',
+          'Show TrustBridge - Kenyan Government Services menu with EXACTLY these 3 options: 1. Report Issue, 2. View Reports, 3. Help. Be brief.',
           {
             phone_number,
             state: 'emergency_menu',
@@ -150,9 +150,9 @@ class ChatbotService {
             conversation_history: []
           }
         );
-        return emergencyMenu || '🏛️ TrustBridge\n\n1. Report Issue\n2. View Reports\n3. Help';
+        return emergencyMenu || '🏛️ TrustBridge - Kenyan Government Services\n\n1. Report Issue\n2. View Reports\n3. Help';
       }
-      return '🏛️ TrustBridge\n\n1. Report Issue\n2. View Reports\n3. Help';
+      return '🏛️ TrustBridge - Kenyan Government Services\n\n1. Report Issue\n2. View Reports\n3. Help';
     }
 
     // REMOVED: Global "2" check - this was causing issues when user selects category "2" (Infrastructure)
@@ -1187,7 +1187,12 @@ class ChatbotService {
     // Use AI for dynamic menu but keep prompt short for speed
     if (aiService.model) {
       const menuPrompt = await aiService.generateResponse(
-        `Show TrustBridge menu with 3 options: 1. Report Issue, 2. View Reports, 3. Help. Be brief and friendly.`,
+        `Show TrustBridge - Kenyan Government Services menu with EXACTLY these 3 options:
+        1. Report Issue
+        2. View Reports
+        3. Help
+        
+        Start with "🏛️ TrustBridge - Kenyan Government Services" and present the 3 options clearly. Be brief and friendly.`,
         {
           phone_number: phone_number || 'unknown',
           state: 'main_menu',
@@ -1203,15 +1208,15 @@ class ChatbotService {
     
     // If AI unavailable, try one more time with simpler prompt
     if (aiService.model) {
-      const fallbackMenu = await aiService.generateResponse(
-        'Show menu: 1. Report Issue, 2. View Reports, 3. Help. Be very brief.',
-        {
-          phone_number: phone_number || 'unknown',
-          state: 'main_menu_fallback',
-          report_data: { ...report_data, language: userLanguage },
-          conversation_history: []
-        }
-      );
+        const fallbackMenu = await aiService.generateResponse(
+          'Show TrustBridge - Kenyan Government Services menu with EXACTLY these 3 options: 1. Report Issue, 2. View Reports, 3. Help. Be very brief.',
+          {
+            phone_number: phone_number || 'unknown',
+            state: 'main_menu_fallback',
+            report_data: { ...report_data, language: userLanguage },
+            conversation_history: []
+          }
+        );
       if (fallbackMenu) {
         return fallbackMenu;
       }
