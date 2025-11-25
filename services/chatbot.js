@@ -618,20 +618,9 @@ class ChatbotService {
         if (selectedSubcategory) {
           report_data.subcategory = selectedSubcategory;
           console.log(`✅ Subcategory selected: ${selectedSubcategory} for category: ${report_data.category}. Moving to DESCRIPTION state.`);
-          // Use AI for description prompt
-          const descriptionPrompt = await aiService.generateResponse(
-            `User selected ${selectedSubcategory} subcategory for ${report_data.category}. Ask them to describe the issue. Be brief and friendly. IMPORTANT: Do NOT mention "submitted" - we are just collecting information.`,
-            {
-              phone_number,
-              state: 'description_prompt',
-              report_data: { ...report_data, subcategory: selectedSubcategory },
-              conversation_history: []
-            }
-          );
-          response = descriptionPrompt || `📝 Please describe the ${report_data.category} - ${selectedSubcategory} issue. Be as detailed as possible.`;
+          
+          // CRITICAL: Save state IMMEDIATELY before generating AI response to prevent state loss
           newState = STATES.DESCRIPTION;
-          shouldSave = true;
-          // CRITICAL: Save state immediately to prevent reset
           await new Promise((resolve, reject) => {
             UserSession.set(phone_number, newState, report_data, (err) => {
               if (err) {
@@ -643,6 +632,19 @@ class ChatbotService {
               }
             });
           });
+          
+          // Use AI for description prompt AFTER state is saved
+          const descriptionPrompt = await aiService.generateResponse(
+            `User selected ${selectedSubcategory} subcategory for ${report_data.category}. Ask them to describe the issue. Be brief and friendly. IMPORTANT: Do NOT mention "submitted" - we are just collecting information.`,
+            {
+              phone_number,
+              state: 'description_prompt',
+              report_data: { ...report_data, subcategory: selectedSubcategory },
+              conversation_history: []
+            }
+          );
+          response = descriptionPrompt || `📝 Please describe the ${report_data.category} - ${selectedSubcategory} issue. Be as detailed as possible.`;
+          shouldSave = false; // Already saved above
         } else if (message.length > 10 && !parseInt(message.trim())) {
           // User typed free-form text (not a number or subcategory) - treat as description
           // This handles cases like "Model of funding and it's tabulation.it hard to compute"
@@ -1221,7 +1223,25 @@ class ChatbotService {
   }
 
   static async getUserReports(phone_number) {
+    // CRITICAL: Only call this from INITIAL state - add safety check
     return new Promise(async (resolve, reject) => {
+      // Get current state to ensure we're in INITIAL state
+      const session = await new Promise((resolve, reject) => {
+        UserSession.get(phone_number, (err, data) => {
+          if (err) reject(err);
+          else resolve(data);
+        });
+      });
+      
+      const currentState = session?.state || STATES.INITIAL;
+      
+      // Safety check: Only show reports in INITIAL state
+      if (currentState !== STATES.INITIAL) {
+        console.warn(`⚠️ getUserReports called in ${currentState} state - ignoring to prevent flow interruption`);
+        resolve('⚠️ Please finish your current report or type *menu* to start over.');
+        return;
+      }
+      
       Report.findByPhone(phone_number, async (err, reports) => {
         if (err) {
           // Use AI to generate error message

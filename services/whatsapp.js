@@ -357,12 +357,19 @@ class WhatsAppService {
 
   async handleIncomingMessage(message) {
     try {
+      // Create consistent message ID (same as in event handler)
+      const messageId = message.id?._serialized || 
+                       message.id || 
+                       `${message.from}_${message.timestamp}_${(message.body || 'media').substring(0, 50)}`;
+      
       // Additional check: ignore if already processed (safety net)
-      const messageId = message.id?._serialized || message.id || `${message.from}_${message.timestamp}`;
       if (this.processedMessages.has(messageId)) {
         console.log('⚠️ Message already processed in handleIncomingMessage, skipping');
         return;
       }
+      
+      // Mark as processed here too (in case event handler didn't catch it)
+      this.processedMessages.add(messageId);
       
       console.log(`📨 Processing message from: ${message.from}, isGroup: ${message.isGroupMsg}, hasMedia: ${message.hasMedia}, type: ${message.type}`);
       
