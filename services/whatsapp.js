@@ -465,7 +465,9 @@ class WhatsAppService {
         const path = require('path');
         const fs = require('fs');
         const sharp = require('sharp');
-        const logoPath = path.join(__dirname, '../TrustLogo.png');
+        // Logo path: TrustLogo.png in project root (use process.cwd() for reliability)
+        const logoPath = path.join(process.cwd(), 'TrustLogo.png');
+        console.log(`🔍 Looking for logo at: ${logoPath}, exists: ${fs.existsSync(logoPath)}`);
         
         if (fs.existsSync(logoPath)) {
           try {
