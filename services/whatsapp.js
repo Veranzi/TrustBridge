@@ -484,9 +484,7 @@ class WhatsAppService {
         
         if (!logoPath) {
           console.warn(`⚠️ TrustLogo.png not found. Tried paths: ${possiblePaths.join(', ')}`);
-        }
-        
-        if (fs.existsSync(logoPath)) {
+        } else if (fs.existsSync(logoPath)) {
           try {
             // Ensure data directory exists
             const dataDir = path.join(__dirname, '../data');
