@@ -465,9 +465,26 @@ class WhatsAppService {
         const path = require('path');
         const fs = require('fs');
         const sharp = require('sharp');
-        // Logo path: TrustLogo.png in project root (use process.cwd() for reliability)
-        const logoPath = path.join(process.cwd(), 'TrustLogo.png');
-        console.log(`🔍 Looking for logo at: ${logoPath}, exists: ${fs.existsSync(logoPath)}`);
+        // Logo path: TrustLogo.png in project root (use __dirname for deployment reliability)
+        // Try multiple paths to ensure it works in different environments
+        const possiblePaths = [
+          path.join(__dirname, '../TrustLogo.png'),  // Relative to services/ directory
+          path.join(process.cwd(), 'TrustLogo.png'),  // Project root
+          path.resolve(__dirname, '../TrustLogo.png') // Absolute path
+        ];
+        
+        let logoPath = null;
+        for (const possiblePath of possiblePaths) {
+          if (fs.existsSync(possiblePath)) {
+            logoPath = possiblePath;
+            console.log(`✅ Found logo at: ${logoPath}`);
+            break;
+          }
+        }
+        
+        if (!logoPath) {
+          console.warn(`⚠️ TrustLogo.png not found. Tried paths: ${possiblePaths.join(', ')}`);
+        }
         
         if (fs.existsSync(logoPath)) {
           try {
