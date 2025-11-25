@@ -1223,7 +1223,8 @@ class ChatbotService {
     }
     
     // Last resort - only if AI completely unavailable
-    return null; // Let caller handle null
+    // Always return the menu with 3 options
+    return '🏛️ TrustBridge - Kenyan Government Services\n\n1. Report Issue\n2. View Reports\n3. Help';
   }
 
 
