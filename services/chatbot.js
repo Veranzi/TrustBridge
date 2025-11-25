@@ -206,56 +206,33 @@ class ChatbotService {
           }
           report_data.conversation_history = conversationHistory;
           
-          // First, try to extract category from keywords - PRIORITIZE EDUCATION
-          let detectedCategory = null;
-          const msgLower = messageLower;
-          
-          // Education keywords - CHECK FIRST (most specific)
-          // Include: university, funding, scholarship, education, school, library, student, teacher, tuition, curriculum, exam, learning
-          if (msgLower.match(/\b(university|universities|funding|scholarship|education|school|schools|library|libraries|student|students|teacher|teachers|tuition|curriculum|exam|exams|learning|teaching|academic|academics|university funding|education funding|school funding)\b/i)) {
-            detectedCategory = 'Education';
-          }
-          // Healthcare keywords
-          else if (msgLower.match(/\b(hospital|hospitals|clinic|clinics|pharmacy|pharmacies|ambulance|ambulances|health|medical|doctor|doctors|nurse|nurses|patient|patients|medicine|medication|treatment|surgery)\b/i)) {
-            detectedCategory = 'Healthcare';
-          }
-          // Infrastructure keywords
-          else if (msgLower.match(/\b(road|roads|bridge|bridges|water|electricity|power|street|streets|highway|highways|pothole|potholes|drainage|sewer|sewage|pipeline|pipelines)\b/i)) {
-            detectedCategory = 'Infrastructure';
-          }
-          // Security keywords
-          else if (msgLower.match(/\b(police|security|crime|crimes|criminal|emergency|safety|theft|robbery|robberies|violence|violent)\b/i)) {
-            detectedCategory = 'Security';
-          }
-          
-          // Use AI to extract category - BE CREATIVE AND HELPFUL
-          // If category is unclear, ask clarifying questions instead of forcing one
+          // FULLY AI-DRIVEN: Let AI intelligently extract and classify the category
+          // AI is creative, understands context, synonyms, and can ask clarifying questions
           const categoryExtractionPrompt = await aiService.generateResponse(
             `User described an issue: "${message}". 
             
-            YOUR ROLE: Help the user categorize their issue creatively and conversationally.
+            YOUR ROLE: Intelligently classify this issue into one of these categories:
             
             AVAILABLE CATEGORIES:
-            1. EDUCATION - Universities, schools, libraries, funding, scholarships, curriculum, exams, students, teachers
-            2. HEALTHCARE - Hospitals, clinics, pharmacies, ambulances, medical services, doctors, health
-            3. INFRASTRUCTURE - Roads, bridges, water supply, electricity, streets, drainage, sewage
-            4. SECURITY - Police, emergency services, crime, safety, theft
-            5. OTHER - Anything that doesn't fit the above
+            1. EDUCATION - Universities, schools, libraries, funding, scholarships, curriculum, exams, students, teachers, academic issues, learning resources, tuition, university funding models
+            2. HEALTHCARE - Hospitals, clinics, pharmacies, ambulances, medical services, doctors, nurses, health issues, patient care, medication, treatment, medical emergencies
+            3. INFRASTRUCTURE - Roads, bridges, water supply, electricity, streets, highways, potholes, drainage, sewage, pipelines, public utilities, road maintenance
+            4. SECURITY - Police services, emergency services, crime, safety issues, theft, robbery, violence, law enforcement, public safety
+            5. OTHER - Anything that doesn't fit the above categories
             
             INSTRUCTIONS:
-            - If the issue CLEARLY matches a category (e.g., "university funding" = Education, "hospital problem" = Healthcare), respond with:
-              "CATEGORY: [CategoryName]" on the first line, then ask for more details.
-            
+            - Be CREATIVE and INTELLIGENT - understand context, synonyms, related terms, and user intent
+            - Think outside the box: "university funding model" = Education, "pothole on main street" = Infrastructure, "ambulance delay" = Healthcare
+            - If the issue CLEARLY matches a category, respond with: "CATEGORY: [CategoryName]" on the first line, then ask for more details
             - If the issue is UNCLEAR or could fit multiple categories, BE CREATIVE:
               * Ask friendly clarifying questions
               * Suggest which category might fit and why
               * Help them understand what each category covers
-              * Be conversational, not robotic
+              * Be conversational and natural, not robotic
               * Example: "I see you mentioned [something]. This could be related to [Category A] or [Category B]. Could you tell me more about [specific aspect]?"
+            - Consider the full context of the conversation when classifying
             
-            - If it's clearly not in the main categories, suggest "Other" but still ask for details.
-            
-            BE CREATIVE: Think outside the box. "University funding model" = Education. "Road maintenance" = Infrastructure. But if someone says "government service delay", ask which service area it affects.
+            BE INTELLIGENT: Understand that "funding" in education context = Education, "road" = Infrastructure, "hospital" = Healthcare. But be flexible and ask questions when unclear.
             
             IMPORTANT: Do NOT mention "submitted" or "submission" - we are just collecting information.`,
             {
@@ -437,139 +414,134 @@ class ChatbotService {
         break;
 
       case STATES.CATEGORY:
-        // CRITICAL: In CATEGORY state, user is selecting a category
-        // Numbers 1-5 mean categories, NOT menu options
-        // Be strict and accurate - match exactly what user selects
+        // FULLY AI-DRIVEN: Let AI intelligently classify user input
+        // AI understands numbers, names, natural language, context, and intent
         const categoryKeys = Object.keys(CATEGORIES);
         const allCategories = Object.values(CATEGORIES).map(cat => cat.name);
-        const categoryList = allCategories.join(', ');
         
-        // First, try to match by number or exact name - STRICT MATCHING
         let selectedCategory = null;
         let matchedKey = null;
         
-        const trimmedMessage = message.trim().toLowerCase();
-        
-        // PRIORITY 1: Check if it's a number (1-5) - this is a category selection, NOT menu
-        if (/^\d+$/.test(trimmedMessage)) {
-          const num = parseInt(trimmedMessage);
-          if (num >= 1 && num <= categoryKeys.length) {
-            matchedKey = categoryKeys[num - 1];
-            selectedCategory = CATEGORIES[matchedKey];
-            console.log(`✅ Category selected by number: ${num} = ${selectedCategory.name}`);
-          }
-        }
-        
-        // PRIORITY 2: If not a number, try exact category name match
-        if (!selectedCategory) {
-        } else if (CATEGORIES[trimmedMessage]) {
-          // Check if it's a direct key match
-          matchedKey = trimmedMessage;
-          selectedCategory = CATEGORIES[matchedKey];
-        } else {
-          // Enhanced keyword matching for natural language
-          const categoryKeywords = {
-            '1': ['healthcare', 'health', 'hospital', 'hospitals', 'clinic', 'clinics', 'pharmacy', 'medical', 'doctor', 'nurse', 'patient', 'ambulance'],
-            '2': ['infrastructure', 'road', 'roads', 'bridge', 'bridges', 'water', 'electricity', 'power', 'street', 'streets', 'highway', 'pothole', 'drainage', 'sewer', 'barabara'],
-            '3': ['education', 'school', 'schools', 'university', 'universities', 'library', 'libraries', 'student', 'students', 'teacher', 'teachers', 'scholarship', 'shule'],
-            '4': ['security', 'police', 'emergency', 'crime', 'safety', 'theft', 'robbery', 'polisi'],
-            '5': ['other', 'misc', 'miscellaneous']
-          };
-          
-          // Try to match by category name first
-          for (const key of categoryKeys) {
-            const cat = CATEGORIES[key];
-            if (cat.name.toLowerCase() === trimmedMessage || 
-                trimmedMessage.includes(cat.name.toLowerCase()) ||
-                cat.name.toLowerCase().includes(trimmedMessage)) {
-              matchedKey = key;
-              selectedCategory = cat;
-              break;
-            }
-          }
-          
-          // If no match, try keyword matching
-          if (!selectedCategory) {
-            for (const key of categoryKeys) {
-              const keywords = categoryKeywords[key] || [];
-              if (keywords.some(keyword => trimmedMessage.includes(keyword) || keyword.includes(trimmedMessage))) {
-                matchedKey = key;
-                selectedCategory = CATEGORIES[key];
-                break;
-              }
-            }
-          }
-        }
-        
-        // If no direct match, use AI to interpret - but be STRICT and ACCURATE
-        if (!selectedCategory && aiService.model) {
+        // Use AI to intelligently interpret user input - be creative and clever
+        if (aiService.model) {
           const categoryInterpretation = await aiService.generateResponse(
             `User said: "${message}" while selecting a category.
             
-            CRITICAL: User is in CATEGORY selection state. They must choose one of these EXACT categories:
-            1. Healthcare (hospitals, clinics, pharmacies, ambulances, medical)
-            2. Infrastructure (roads, bridges, water, electricity, streets, drainage)
-            3. Education (schools, universities, libraries, scholarships)
-            4. Security (police, emergency, crime, safety)
-            5. Other
+            YOUR ROLE: Intelligently classify the user's input into one of these categories:
             
-            Respond with ONLY the exact category name: Healthcare, Infrastructure, Education, Security, or Other.
-            Do NOT mention "submitted" or "submission" - we are just selecting a category.
-            Be ACCURATE - match the user's intent to one of these 5 categories exactly.
-            Do NOT hallucinate or make up categories.`,
+            AVAILABLE CATEGORIES:
+            1. Healthcare - Hospitals, clinics, pharmacies, ambulances, medical services, doctors, nurses, health issues, patient care, medication, treatment
+            2. Infrastructure - Roads, bridges, water supply, electricity, streets, highways, potholes, drainage, sewage, pipelines, public utilities
+            3. Education - Schools, universities, libraries, scholarships, funding, curriculum, exams, students, teachers, academic issues, learning resources
+            4. Security - Police services, emergency services, crime, safety issues, theft, robbery, violence, law enforcement
+            5. Other - Anything that doesn't fit the above categories
+            
+            INSTRUCTIONS:
+            - Be CREATIVE and INTELLIGENT - understand context, synonyms, related terms, and user intent
+            - If user types a number (1-5), map it to the corresponding category
+            - If user types a category name (exact or partial), match it intelligently
+            - If user types natural language (e.g., "hospital problem", "road issue", "university funding"), classify it creatively
+            - Think outside the box: "funding model" = Education, "pothole" = Infrastructure, "ambulance delay" = Healthcare
+            - Consider context: if they mentioned something earlier, use that context
+            
+            RESPOND WITH: Only the exact category name: Healthcare, Infrastructure, Education, Security, or Other.
+            Do NOT add explanations, just the category name.
+            Do NOT mention "submitted" or "submission" - we are just selecting a category.`,
             {
               phone_number,
               state: 'category_interpretation',
               report_data,
-              conversation_history: []
+              conversation_history: report_data.conversation_history || []
             }
           );
           
-          if (categoryInterpretation && categoryInterpretation !== 'UNKNOWN') {
-            // Extract category name from AI response
+          if (categoryInterpretation) {
+            // Extract category name from AI response - be flexible
             const categoryNames = ['Healthcare', 'Infrastructure', 'Education', 'Security', 'Other'];
-            const extractedCategory = categoryNames.find(cat => 
-              categoryInterpretation.toLowerCase().includes(cat.toLowerCase()) ||
-              cat.toLowerCase().includes(categoryInterpretation.trim().toLowerCase())
-            );
+            const responseLower = categoryInterpretation.toLowerCase().trim();
             
-            if (extractedCategory) {
-              // Find the matched category key
-              for (const key of categoryKeys) {
-                const cat = CATEGORIES[key];
-                if (cat.name === extractedCategory) {
-                  matchedKey = key;
-                  selectedCategory = cat;
-                  break;
+            // Check for number first (1-5)
+            if (/^[1-5]$/.test(responseLower)) {
+              const num = parseInt(responseLower);
+              matchedKey = categoryKeys[num - 1];
+              selectedCategory = CATEGORIES[matchedKey];
+              console.log(`✅ AI classified number ${num} as ${selectedCategory.name}`);
+            } else {
+              // Find category by name match (flexible matching)
+              const extractedCategory = categoryNames.find(cat => {
+                const catLower = cat.toLowerCase();
+                return responseLower.includes(catLower) || catLower.includes(responseLower) ||
+                       responseLower === catLower || responseLower.startsWith(catLower.substring(0, 4));
+              });
+              
+              if (extractedCategory) {
+                // Find the matched category key
+                for (const key of categoryKeys) {
+                  const cat = CATEGORIES[key];
+                  if (cat.name === extractedCategory) {
+                    matchedKey = key;
+                    selectedCategory = cat;
+                    console.log(`✅ AI intelligently classified "${message}" as ${selectedCategory.name}`);
+                    break;
+                  }
                 }
               }
             }
           }
         }
         
+        // Fallback: If AI unavailable, try simple number match only
+        if (!selectedCategory) {
+          const trimmedMessage = message.trim();
+          if (/^[1-5]$/.test(trimmedMessage)) {
+            const num = parseInt(trimmedMessage);
+            matchedKey = categoryKeys[num - 1];
+            selectedCategory = CATEGORIES[matchedKey];
+            console.log(`✅ Fallback: Number ${num} = ${selectedCategory.name}`);
+          }
+        }
+        
         if (selectedCategory) {
           report_data.category = selectedCategory.name;
           if (selectedCategory.subcategories.length > 0) {
-            // Quick subcategory menu - direct response for speed
-            const subcategoryList = selectedCategory.subcategories.map((sub, idx) => `${idx + 1}. ${sub}`).join('\n');
-            response = `📋 *Select Subcategory for ${selectedCategory.name}:*\n\n${subcategoryList}\n\n💡 Type the name or number.`;
+            // Use AI to generate dynamic subcategory menu
+            const subcategoryMenu = await this.getSubcategoryMenu(selectedCategory, userLanguage, phone_number, report_data);
+            response = subcategoryMenu;
             newState = STATES.SUBCATEGORY;
           } else {
-            // Quick description prompt - direct and fast
-            response = `📝 Please describe the ${selectedCategory.name} issue. Be as detailed as possible.`;
+            // Use AI to generate dynamic description prompt
+            const descriptionPrompt = await aiService.generateResponse(
+              `User selected ${selectedCategory.name} category. Ask them to describe the issue. Be friendly and brief. Do NOT mention "submitted".`,
+              {
+                phone_number,
+                state: 'description_prompt',
+                report_data: { ...report_data, category: selectedCategory.name },
+                conversation_history: []
+              }
+            );
+            response = descriptionPrompt || `📝 Please describe the ${selectedCategory.name} issue. Be as detailed as possible.`;
             newState = STATES.DESCRIPTION;
           }
           shouldSave = true;
         } else {
-          // Quick error - no AI delay for speed
-          response = await this.getCategoryMenu(userLanguage, phone_number, report_data);
+          // Use AI to generate error message and show menu again
+          const errorMsg = await aiService.generateResponse(
+            `User input "${message}" doesn't match any category. Apologize briefly and show the category menu again. Be friendly.`,
+            {
+              phone_number,
+              state: 'category_error',
+              report_data,
+              conversation_history: []
+            }
+          );
+          const categoryMenu = await this.getCategoryMenu(userLanguage, phone_number, report_data);
+          response = errorMsg ? `${errorMsg}\n\n${categoryMenu}` : categoryMenu;
         }
         break;
 
       case STATES.SUBCATEGORY:
         // Safety check: ensure report_data.category exists
         if (!report_data.category) {
-          // Category is missing - reset to category selection
           console.warn('⚠️ Category missing in SUBCATEGORY state, resetting to category selection');
           response = await this.getCategoryMenu(userLanguage, phone_number, report_data);
           newState = STATES.CATEGORY;
@@ -582,7 +554,6 @@ class ChatbotService {
         const category = subcategoryCategoryKey && CATEGORIES[subcategoryCategoryKey] ? CATEGORIES[subcategoryCategoryKey] : null;
         
         if (!category) {
-          // Category not found - reset to category selection
           console.warn(`⚠️ Category "${report_data.category}" not found, resetting to category selection`);
           response = await this.getCategoryMenu(userLanguage, phone_number, report_data);
           newState = STATES.CATEGORY;
@@ -590,69 +561,71 @@ class ChatbotService {
           break;
         }
         
-        // CRITICAL: In SUBCATEGORY state, user is selecting a subcategory
-        // Be strict and accurate - match exactly what user selects
+        // FULLY AI-DRIVEN: Let AI intelligently classify subcategory selection
         let selectedSubcategory = null;
-        const trimmedSubMessage = message.trim().toLowerCase();
         
-        // PRIORITY 1: Check if it's a number (1, 2, 3, etc.) - strict number match
-        if (category.subcategories && /^\d+$/.test(trimmedSubMessage)) {
-          const num = parseInt(trimmedSubMessage);
-          if (num >= 1 && num <= category.subcategories.length) {
-            selectedSubcategory = category.subcategories[num - 1];
-            console.log(`✅ Subcategory selected by number: ${num} = ${selectedSubcategory}`);
-          }
-        }
-        
-        // PRIORITY 2: Try exact name match (case-insensitive)
-        if (!selectedSubcategory && category.subcategories) {
-          for (const sub of category.subcategories) {
-            if (sub.toLowerCase() === trimmedSubMessage) {
-              selectedSubcategory = sub;
-              console.log(`✅ Subcategory selected by name: ${sub}`);
-              break;
-            }
-          }
-        }
-        
-        // PRIORITY 3: Try partial match (if exact didn't work)
-        if (!selectedSubcategory && category.subcategories) {
-          for (const sub of category.subcategories) {
-            if (trimmedSubMessage.includes(sub.toLowerCase()) || sub.toLowerCase().includes(trimmedSubMessage)) {
-              selectedSubcategory = sub;
-              console.log(`✅ Subcategory selected by partial match: ${sub}`);
-              break;
-            }
-          }
-        }
-        
-        // If no direct match, use AI to interpret - but be STRICT and ACCURATE
-        if (!selectedSubcategory && category.subcategories && category.subcategories.length > 0 && aiService.model) {
+        // Use AI to intelligently interpret user input - be creative and clever
+        if (category.subcategories && category.subcategories.length > 0 && aiService.model) {
           const subcategoryInterpretation = await aiService.generateResponse(
             `User said: "${message}" while selecting a subcategory for ${report_data.category}.
             
-            CRITICAL: User is in SUBCATEGORY selection state. Available subcategories are: ${category.subcategories.join(', ')}.
+            YOUR ROLE: Intelligently match the user's input to one of these subcategories:
+            ${category.subcategories.map((sub, idx) => `${idx + 1}. ${sub}`).join('\n')}
             
-            Respond with ONLY the exact subcategory name from this list: ${category.subcategories.join(', ')}.
-            If unclear or doesn't match, respond with "UNKNOWN".
-            Do NOT mention "submitted" or "submission" - we are just selecting a subcategory.
-            Be ACCURATE - match exactly to one of the listed subcategories. Do NOT hallucinate.`,
+            INSTRUCTIONS:
+            - Be CREATIVE and INTELLIGENT - understand synonyms, related terms, and user intent
+            - If user types a number (1-${category.subcategories.length}), map it to the corresponding subcategory
+            - If user types a subcategory name (exact or partial), match it intelligently
+            - If user types natural language (e.g., "hospital" for Healthcare, "road" for Infrastructure), classify it creatively
+            - Consider context and be flexible with matching
+            
+            RESPOND WITH: Only the exact subcategory name from the list above.
+            If it doesn't match any subcategory, respond with "UNKNOWN".
+            Do NOT add explanations, just the subcategory name.
+            Do NOT mention "submitted" or "submission" - we are just selecting a subcategory.`,
             {
               phone_number,
               state: 'subcategory_interpretation',
               report_data,
-              conversation_history: []
+              conversation_history: report_data.conversation_history || []
             }
           );
           
           if (subcategoryInterpretation && subcategoryInterpretation !== 'UNKNOWN') {
-            // Find the matched subcategory
-            for (const sub of category.subcategories) {
-              if (sub.toLowerCase() === subcategoryInterpretation.trim().toLowerCase() ||
-                  subcategoryInterpretation.toLowerCase().includes(sub.toLowerCase())) {
-                selectedSubcategory = sub;
-                break;
+            const responseLower = subcategoryInterpretation.toLowerCase().trim();
+            
+            // Check for number first
+            if (/^\d+$/.test(responseLower)) {
+              const num = parseInt(responseLower);
+              if (num >= 1 && num <= category.subcategories.length) {
+                selectedSubcategory = category.subcategories[num - 1];
+                console.log(`✅ AI classified number ${num} as ${selectedSubcategory}`);
               }
+            } else {
+              // Find subcategory by name match (flexible matching)
+              for (const sub of category.subcategories) {
+                const subLower = sub.toLowerCase();
+                if (responseLower === subLower || 
+                    responseLower.includes(subLower) || 
+                    subLower.includes(responseLower) ||
+                    responseLower.startsWith(subLower.substring(0, 3))) {
+                  selectedSubcategory = sub;
+                  console.log(`✅ AI intelligently classified "${message}" as ${selectedSubcategory}`);
+                  break;
+                }
+              }
+            }
+          }
+        }
+        
+        // Fallback: If AI unavailable, try simple number match only
+        if (!selectedSubcategory && category.subcategories) {
+          const trimmedSubMessage = message.trim();
+          if (/^\d+$/.test(trimmedSubMessage)) {
+            const num = parseInt(trimmedSubMessage);
+            if (num >= 1 && num <= category.subcategories.length) {
+              selectedSubcategory = category.subcategories[num - 1];
+              console.log(`✅ Fallback: Number ${num} = ${selectedSubcategory}`);
             }
           }
         }
