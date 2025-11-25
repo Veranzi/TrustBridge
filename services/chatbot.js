@@ -272,7 +272,7 @@ class ChatbotService {
                                       categoryExtractionPrompt.toLowerCase().includes('?') ||
                                       !extractedCategory;
             
-            if (isAskingQuestions && !detectedCategory) {
+            if (isAskingQuestions && !extractedCategory) {
               // AI is being creative and asking questions - don't force a category yet
               // Store the description and let user respond to the questions
               if (isFollowUpResponse && report_data.description) {
@@ -286,8 +286,8 @@ class ChatbotService {
               newState = STATES.INITIAL; // Stay in INITIAL to continue conversation
               shouldSave = true;
             } else {
-              // AI provided a clear category or we detected one from keywords
-              report_data.category = detectedCategory || extractedCategory || 'Other';
+              // AI provided a clear category - fully AI-driven, no static keywords
+              report_data.category = extractedCategory || 'Other';
               
               // If this is a follow-up response and we now have enough info, use it
               if (isFollowUpResponse && report_data.description) {
