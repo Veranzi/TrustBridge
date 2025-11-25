@@ -345,9 +345,16 @@ class WhatsAppService {
 
   async handleIncomingMessage(message) {
     try {
-      console.log(`📨 Message event received from: ${message.from}, isGroup: ${message.isGroupMsg}, hasMedia: ${message.hasMedia}, type: ${message.type}`);
+      // Additional check: ignore if already processed (safety net)
+      const messageId = message.id?._serialized || message.id || `${message.from}_${message.timestamp}`;
+      if (this.processedMessages.has(messageId)) {
+        console.log('⚠️ Message already processed in handleIncomingMessage, skipping');
+        return;
+      }
       
-      // Ignore messages from groups or status
+      console.log(`📨 Processing message from: ${message.from}, isGroup: ${message.isGroupMsg}, hasMedia: ${message.hasMedia}, type: ${message.type}`);
+      
+      // Ignore messages from groups or status (redundant check, but safe)
       if (message.from === 'status@broadcast' || message.isGroupMsg) {
         console.log('⚠️ Ignoring group/status message');
         return;
@@ -449,7 +456,7 @@ class WhatsAppService {
               fs.mkdirSync(dataDir, { recursive: true });
             }
             
-            // Resize logo to small avatar size (128x128 pixels)
+            // Resize logo to small avatar size (64x64 pixels - very small for WhatsApp)
             const resizedLogoPath = path.join(dataDir, 'logo_resized.png');
             
             // Check if resized logo exists and is recent (within 1 hour), otherwise recreate
@@ -458,18 +465,18 @@ class WhatsAppService {
             
             if (shouldResize) {
               await sharp(logoPath)
-                .resize(128, 128, {
+                .resize(64, 64, {
                   fit: 'contain',
                   background: { r: 255, g: 255, b: 255, alpha: 0 }
                 })
                 .png()
                 .toFile(resizedLogoPath);
-              console.log(`✅ Resized TrustLogo.png to 128x128 avatar`);
+              console.log(`✅ Resized TrustLogo.png to 64x64 small avatar`);
             }
             
             const media = MessageMedia.fromFilePath(resizedLogoPath);
             await this.client.sendMessage(formattedNumber, media, { caption: message });
-            console.log(`📷 Sent TrustBridge logo avatar (128x128) with message to ${phone_number}`);
+            console.log(`📷 Sent TrustBridge logo avatar (64x64) with message to ${phone_number}`);
             return true;
           } catch (error) {
             console.error('❌ Error resizing/sending logo:', error.message);
