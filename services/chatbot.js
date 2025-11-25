@@ -355,8 +355,8 @@ class ChatbotService {
 
     switch (state) {
       case STATES.INITIAL:
-        // Handle menu selections in initial state ONLY if truly in initial state
-        // Don't process if user is in middle of reporting (has category/description)
+        // CRITICAL: Only handle menu commands (1, 2, 3) in INITIAL state
+        // If user has report data, they're in middle of reporting - continue that flow
         if (report_data.category || report_data.description) {
           // User is in middle of reporting, don't reset - continue with their report
           console.log(`⚠️ User in INITIAL state but has report data. Category: ${report_data.category}, Description: ${report_data.description ? 'yes' : 'no'}`);
@@ -409,12 +409,15 @@ class ChatbotService {
             shouldSave = true;
           }
         } else {
-          // Truly in initial state - handle menu commands
-          if (message.toLowerCase() === '1' || message.toLowerCase() === 'report an issue' || message.toLowerCase() === 'ripoti tatizo') {
+          // Truly in INITIAL state - handle menu commands STRICTLY
+          // Only process 1, 2, 3 as menu options when in INITIAL state
+          const trimmedMsg = message.trim().toLowerCase();
+          
+          if (trimmedMsg === '1' || trimmedMsg === 'report an issue' || trimmedMsg === 'ripoti tatizo') {
             response = await this.startReport(phone_number, userLanguage);
-          } else if (message.toLowerCase() === '2' || message.toLowerCase() === 'view my reports' || message.toLowerCase() === 'my reports' || message.toLowerCase() === 'angalia ripoti zangu') {
+          } else if (trimmedMsg === '2' || trimmedMsg === 'view my reports' || trimmedMsg === 'my reports' || trimmedMsg === 'angalia ripoti zangu') {
             response = await this.getUserReports(phone_number);
-          } else if (message.toLowerCase() === '3' || message.toLowerCase() === 'help' || message.toLowerCase() === 'msaada') {
+          } else if (trimmedMsg === '3' || trimmedMsg === 'help' || trimmedMsg === 'msaada') {
             // Use AI to generate help message
             const helpResponse = await aiService.generateResponse(
               'The user asked for help. Explain how to use TrustBridge, how to report issues, and what options are available. Be friendly and helpful.',
@@ -434,22 +437,31 @@ class ChatbotService {
         break;
 
       case STATES.CATEGORY:
-        // Use AI to interpret user's category selection dynamically
-        // User can type: number (1-5), category name (Healthcare, Infrastructure, etc.), or natural language
+        // CRITICAL: In CATEGORY state, user is selecting a category
+        // Numbers 1-5 mean categories, NOT menu options
+        // Be strict and accurate - match exactly what user selects
         const categoryKeys = Object.keys(CATEGORIES);
         const allCategories = Object.values(CATEGORIES).map(cat => cat.name);
         const categoryList = allCategories.join(', ');
         
-        // First, try to match by number or exact name
+        // First, try to match by number or exact name - STRICT MATCHING
         let selectedCategory = null;
         let matchedKey = null;
         
         const trimmedMessage = message.trim().toLowerCase();
         
-        // Check if it's a number
-        if (parseInt(trimmedMessage) >= 1 && parseInt(trimmedMessage) <= categoryKeys.length) {
-          matchedKey = categoryKeys[parseInt(trimmedMessage) - 1];
-          selectedCategory = CATEGORIES[matchedKey];
+        // PRIORITY 1: Check if it's a number (1-5) - this is a category selection, NOT menu
+        if (/^\d+$/.test(trimmedMessage)) {
+          const num = parseInt(trimmedMessage);
+          if (num >= 1 && num <= categoryKeys.length) {
+            matchedKey = categoryKeys[num - 1];
+            selectedCategory = CATEGORIES[matchedKey];
+            console.log(`✅ Category selected by number: ${num} = ${selectedCategory.name}`);
+          }
+        }
+        
+        // PRIORITY 2: If not a number, try exact category name match
+        if (!selectedCategory) {
         } else if (CATEGORIES[trimmedMessage]) {
           // Check if it's a direct key match
           matchedKey = trimmedMessage;
@@ -489,19 +501,22 @@ class ChatbotService {
           }
         }
         
-        // If no direct match, use AI to interpret the user's intent
+        // If no direct match, use AI to interpret - but be STRICT and ACCURATE
         if (!selectedCategory && aiService.model) {
           const categoryInterpretation = await aiService.generateResponse(
-            `User said: "${message}". 
+            `User said: "${message}" while selecting a category.
             
-            Available categories:
-            - Healthcare (hospitals, clinics, pharmacies, ambulances, medical)
-            - Infrastructure (roads, bridges, water, electricity, streets, drainage)
-            - Education (schools, universities, libraries, scholarships)
-            - Security (police, emergency, crime, safety)
-            - Other
+            CRITICAL: User is in CATEGORY selection state. They must choose one of these EXACT categories:
+            1. Healthcare (hospitals, clinics, pharmacies, ambulances, medical)
+            2. Infrastructure (roads, bridges, water, electricity, streets, drainage)
+            3. Education (schools, universities, libraries, scholarships)
+            4. Security (police, emergency, crime, safety)
+            5. Other
             
-            Respond with ONLY the exact category name (Healthcare, Infrastructure, Education, Security, or Other).`,
+            Respond with ONLY the exact category name: Healthcare, Infrastructure, Education, Security, or Other.
+            Do NOT mention "submitted" or "submission" - we are just selecting a category.
+            Be ACCURATE - match the user's intent to one of these 5 categories exactly.
+            Do NOT hallucinate or make up categories.`,
             {
               phone_number,
               state: 'category_interpretation',
@@ -575,34 +590,53 @@ class ChatbotService {
           break;
         }
         
-        // Check if user typed exact subcategory name (case-insensitive) or number
+        // CRITICAL: In SUBCATEGORY state, user is selecting a subcategory
+        // Be strict and accurate - match exactly what user selects
         let selectedSubcategory = null;
-        const trimmedSubMessage = message.trim();
+        const trimmedSubMessage = message.trim().toLowerCase();
         
-        // Try exact match first (case-insensitive)
-        if (category.subcategories) {
-          for (const sub of category.subcategories) {
-            if (sub.toLowerCase() === trimmedSubMessage.toLowerCase() ||
-                trimmedSubMessage.toLowerCase().includes(sub.toLowerCase()) ||
-                sub.toLowerCase().includes(trimmedSubMessage.toLowerCase())) {
-              selectedSubcategory = sub;
-              break;
-            }
-          }
-          
-          // Try number match (1, 2, 3, etc.)
-          if (!selectedSubcategory && parseInt(trimmedSubMessage) >= 1 && parseInt(trimmedSubMessage) <= category.subcategories.length) {
-            selectedSubcategory = category.subcategories[parseInt(trimmedSubMessage) - 1];
+        // PRIORITY 1: Check if it's a number (1, 2, 3, etc.) - strict number match
+        if (category.subcategories && /^\d+$/.test(trimmedSubMessage)) {
+          const num = parseInt(trimmedSubMessage);
+          if (num >= 1 && num <= category.subcategories.length) {
+            selectedSubcategory = category.subcategories[num - 1];
+            console.log(`✅ Subcategory selected by number: ${num} = ${selectedSubcategory}`);
           }
         }
         
-        // If no direct match, use AI to interpret user's intent
+        // PRIORITY 2: Try exact name match (case-insensitive)
+        if (!selectedSubcategory && category.subcategories) {
+          for (const sub of category.subcategories) {
+            if (sub.toLowerCase() === trimmedSubMessage) {
+              selectedSubcategory = sub;
+              console.log(`✅ Subcategory selected by name: ${sub}`);
+              break;
+            }
+          }
+        }
+        
+        // PRIORITY 3: Try partial match (if exact didn't work)
+        if (!selectedSubcategory && category.subcategories) {
+          for (const sub of category.subcategories) {
+            if (trimmedSubMessage.includes(sub.toLowerCase()) || sub.toLowerCase().includes(trimmedSubMessage)) {
+              selectedSubcategory = sub;
+              console.log(`✅ Subcategory selected by partial match: ${sub}`);
+              break;
+            }
+          }
+        }
+        
+        // If no direct match, use AI to interpret - but be STRICT and ACCURATE
         if (!selectedSubcategory && category.subcategories && category.subcategories.length > 0 && aiService.model) {
           const subcategoryInterpretation = await aiService.generateResponse(
-            `The user said: "${message}". Available subcategories for ${report_data.category} are: ${category.subcategories.join(', ')}. 
+            `User said: "${message}" while selecting a subcategory for ${report_data.category}.
             
-            Determine which subcategory they want. Respond with ONLY the exact subcategory name from this list: ${category.subcategories.join(', ')}. 
-            If unclear, respond with "UNKNOWN".`,
+            CRITICAL: User is in SUBCATEGORY selection state. Available subcategories are: ${category.subcategories.join(', ')}.
+            
+            Respond with ONLY the exact subcategory name from this list: ${category.subcategories.join(', ')}.
+            If unclear or doesn't match, respond with "UNKNOWN".
+            Do NOT mention "submitted" or "submission" - we are just selecting a subcategory.
+            Be ACCURATE - match exactly to one of the listed subcategories. Do NOT hallucinate.`,
             {
               phone_number,
               state: 'subcategory_interpretation',

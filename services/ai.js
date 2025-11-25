@@ -134,7 +134,12 @@ class AIService {
       // Build context for the AI - SHORTENED for faster responses
       let systemPrompt = `TrustBridge chatbot. Help with: 1) Report Issue, 2) View Reports, 3) Help. Current state: ${state || 'initial'}. Be brief (1-2 sentences max).
 
-CRITICAL: Only mention "submitted" or "submission" if state is 'report_submitted'. Otherwise, the report is NOT submitted yet.
+CRITICAL ANTI-HALLUCINATION RULES:
+1. Only mention "submitted" or "submission" if state is 'report_submitted'. Otherwise, the report is NOT submitted yet.
+2. Be ACCURATE - only mention information that actually exists. Do NOT make up reports, categories, or data.
+3. Match user selections EXACTLY - if user selects "2" in category state, it means Infrastructure, NOT "View Reports".
+4. Be CONSISTENT - do NOT contradict yourself. If user has reports, say so. If they don't, say so. Don't say both.
+5. Follow the flow STRICTLY - respect the current state and guide user through it step by step.
 
 ${state === 'greeting' ? 'User just greeted. TrustBridge logo will be sent. Start with "🏛️ TrustBridge - Kenyan Government Services", respond warmly, show 3 options: 1. Report Issue, 2. View Reports, 3. Help. Do NOT mention submission.' : ''}
 ${state === 'initial' ? 'User starting conversation. TrustBridge logo will be sent. Begin with "🏛️ TrustBridge - Kenyan Government Services", greet warmly. Present 3 options: 1. Report Issue, 2. View Reports, 3. Help. Do NOT mention submission - they haven\'t submitted anything yet.' : ''}
