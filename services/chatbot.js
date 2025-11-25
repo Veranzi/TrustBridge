@@ -1311,7 +1311,16 @@ class ChatbotService {
           }).join('\n\n');
           
           const reportsMsg = await aiService.generateResponse(
-            `The user has ${reports.length} report(s). Present this summary in a friendly way: ${reportSummary}. Explain the statuses (pending, in_progress, resolved) and encourage them to report more issues if needed.`,
+            `The user has ${reports.length} report(s). List them clearly: ${reportSummary}. 
+            
+            CRITICAL ANTI-HALLUCINATION RULES:
+            - Be consistent - do NOT say "you have no reports" or contradict yourself
+            - Only mention reports that actually exist in the database (${reports.length} reports exist)
+            - After listing, say "Type *menu* to report a new issue."
+            - Do NOT mention "submitted" unless showing actual submitted reports
+            - Be brief and clear
+            - Do NOT hallucinate or make up information
+            - Do NOT add contradictory messages after listing reports`,
             {
               phone_number,
               state: 'view_reports',
