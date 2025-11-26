@@ -36,6 +36,197 @@ app.get('/health', (req, res) => {
   });
 });
 
+// QR Code display endpoint - shows QR code as image for easier scanning
+app.get('/qr-code', (req, res) => {
+  const qr = whatsappService.getCurrentQR();
+  
+  if (!qr) {
+    return res.send(`
+      <!DOCTYPE html>
+      <html>
+      <head>
+        <title>TrustBridge - WhatsApp QR Code</title>
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <style>
+          body {
+            font-family: Arial, sans-serif;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            min-height: 100vh;
+            margin: 0;
+            background: #f5f5f5;
+          }
+          .container {
+            text-align: center;
+            background: white;
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+          }
+          h1 { color: #333; }
+          .message { color: #666; margin: 20px 0; }
+        </style>
+      </head>
+      <body>
+        <div class="container">
+          <h1>📱 TrustBridge WhatsApp QR Code</h1>
+          <p class="message">⏳ QR code not available yet. Please wait for WhatsApp initialization...</p>
+          <p class="message">Check server logs for initialization status.</p>
+          <p><a href="/">← Back to Home</a></p>
+        </div>
+      </body>
+      </html>
+    `);
+  }
+  
+  // Generate QR code as SVG using qrcode library
+  const QRCode = require('qrcode');
+  
+  QRCode.toDataURL(qr, {
+    errorCorrectionLevel: 'H',
+    type: 'image/png',
+    width: 400,
+    margin: 2
+  }, (err, url) => {
+    if (err) {
+      return res.send(`
+        <!DOCTYPE html>
+        <html>
+        <head>
+          <title>TrustBridge - WhatsApp QR Code</title>
+          <meta name="viewport" content="width=device-width, initial-scale=1.0">
+          <style>
+            body {
+              font-family: Arial, sans-serif;
+              display: flex;
+              flex-direction: column;
+              align-items: center;
+              justify-content: center;
+              min-height: 100vh;
+              margin: 0;
+              background: #f5f5f5;
+            }
+            .container {
+              text-align: center;
+              background: white;
+              padding: 30px;
+              border-radius: 10px;
+              box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            }
+            h1 { color: #333; }
+            .error { color: #d32f2f; }
+          </style>
+        </head>
+        <body>
+          <div class="container">
+            <h1>📱 TrustBridge WhatsApp QR Code</h1>
+            <p class="error">Error generating QR code image</p>
+            <p><a href="/">← Back to Home</a></p>
+          </div>
+        </body>
+        </html>
+      `);
+    }
+    
+    res.send(`
+      <!DOCTYPE html>
+      <html>
+      <head>
+        <title>TrustBridge - WhatsApp QR Code</title>
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <style>
+          body {
+            font-family: Arial, sans-serif;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            min-height: 100vh;
+            margin: 0;
+            background: #f5f5f5;
+          }
+          .container {
+            text-align: center;
+            background: white;
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            max-width: 500px;
+          }
+          h1 { color: #333; margin-bottom: 10px; }
+          .qr-code {
+            margin: 20px 0;
+            padding: 20px;
+            background: white;
+            border: 2px solid #ddd;
+            border-radius: 10px;
+          }
+          .qr-code img {
+            max-width: 100%;
+            height: auto;
+            display: block;
+            margin: 0 auto;
+          }
+          .instructions {
+            color: #666;
+            margin: 20px 0;
+            text-align: left;
+            background: #f9f9f9;
+            padding: 15px;
+            border-radius: 5px;
+          }
+          .instructions ol {
+            margin: 10px 0;
+            padding-left: 20px;
+          }
+          .instructions li {
+            margin: 8px 0;
+          }
+          .note {
+            color: #ff9800;
+            font-size: 14px;
+            margin-top: 15px;
+            padding: 10px;
+            background: #fff3e0;
+            border-radius: 5px;
+          }
+          a {
+            color: #1976d2;
+            text-decoration: none;
+            margin-top: 20px;
+            display: inline-block;
+          }
+          a:hover { text-decoration: underline; }
+        </style>
+      </head>
+      <body>
+        <div class="container">
+          <h1>📱 TrustBridge WhatsApp QR Code</h1>
+          <div class="qr-code">
+            <img src="${url}" alt="WhatsApp QR Code">
+          </div>
+          <div class="instructions">
+            <strong>How to Scan:</strong>
+            <ol>
+              <li>Open WhatsApp on your phone</li>
+              <li>Go to <strong>Settings</strong> → <strong>Linked Devices</strong> → <strong>Link a Device</strong></li>
+              <li>Point your camera at the QR code above</li>
+              <li>Wait for connection confirmation</li>
+            </ol>
+          </div>
+          <div class="note">
+            💡 <strong>Tip:</strong> This QR code will auto-refresh if it expires. If scanning fails, refresh this page to get the latest QR code.
+          </div>
+          <a href="/">← Back to Home</a>
+        </div>
+      </body>
+      </html>
+    `);
+  });
+});
+
 // Reset WhatsApp session endpoint (for troubleshooting on Render)
 app.post('/admin/reset-whatsapp', (req, res) => {
   const adminPassword = req.body.password || req.headers['x-admin-password'];

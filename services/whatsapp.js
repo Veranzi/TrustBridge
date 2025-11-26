@@ -11,6 +11,11 @@ class WhatsAppService {
     this.lastQRTime = 0; // Track when last QR code was shown
     this.qrRefreshInterval = 90000; // Minimum 90 seconds between QR code refreshes (90,000ms)
     this.qrCount = 0; // Track QR code count
+    this.currentQR = null; // Store current QR code data for web display
+  }
+  
+  getCurrentQR() {
+    return this.currentQR;
   }
 
   initialize() {
