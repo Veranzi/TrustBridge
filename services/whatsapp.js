@@ -51,14 +51,19 @@ class WhatsAppService {
 
       // QR Code generation
       this.client.on('qr', (qr) => {
-        console.log('\n📱 Scan this QR code with WhatsApp to connect:');
-        console.log('==========================================');
+        console.log('\n📱 ==========================================');
+        console.log('📱 SCAN THIS QR CODE WITH WHATSAPP NOW!');
+        console.log('📱 ==========================================');
         qrcode.generate(qr, { small: true });
-        console.log('==========================================');
-        console.log('💡 Tips:');
-        console.log('   - Make sure your phone and computer are on the same network');
-        console.log('   - You have about 60 seconds to scan (QR code will auto-refresh if needed)');
-        console.log('   - If it fails, try restarting the server\n');
+        console.log('📱 ==========================================');
+        console.log('💡 IMPORTANT TIPS:');
+        console.log('   1. Open WhatsApp on your phone');
+        console.log('   2. Go to Settings → Linked Devices → Link a Device');
+        console.log('   3. Point your camera at the QR code above');
+        console.log('   4. You have about 60 seconds to scan');
+        console.log('   5. QR code will auto-refresh if it expires');
+        console.log('   6. Make sure your phone has internet connection');
+        console.log('   7. If it keeps failing, delete ./data/whatsapp-session and restart\n');
       });
 
       // Client ready
