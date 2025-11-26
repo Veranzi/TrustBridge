@@ -267,6 +267,81 @@ app.get('/qr-code', (req, res) => {
   });
 });
 
+// Database viewer endpoint - see how database is accepting content
+app.get('/api/admin/database', (req, res) => {
+  const adminPassword = req.headers['x-admin-password'] || req.query.password;
+  if (adminPassword !== process.env.ADMIN_PASSWORD) {
+    return res.status(401).json({ error: 'Unauthorized' });
+  }
+  
+  const { db } = require('./database/db');
+  const Report = require('./models/Report');
+  
+  // Get all reports
+  Report.findAll((err, reports) => {
+    if (err) {
+      return res.status(500).json({ error: 'Database error', message: err.message });
+    }
+    
+    // Get all sessions
+    db.all('SELECT * FROM user_sessions', [], (err, sessions) => {
+      if (err) {
+        return res.status(500).json({ error: 'Database error', message: err.message });
+      }
+      
+      // Get table structure
+      db.all("SELECT name FROM sqlite_master WHERE type='table'", [], (err, tables) => {
+        if (err) {
+          return res.status(500).json({ error: 'Database error', message: err.message });
+        }
+        
+        const tableInfo = {};
+        let completed = 0;
+        const totalTables = tables.length;
+        
+        if (totalTables === 0) {
+          return res.json({
+            tables: [],
+            reports: reports || [],
+            sessions: sessions || [],
+            structure: {}
+          });
+        }
+        
+        tables.forEach((table) => {
+          db.all(`PRAGMA table_info(${table.name})`, [], (err, columns) => {
+            if (!err) {
+              tableInfo[table.name] = columns;
+            }
+            completed++;
+            
+            if (completed === totalTables) {
+              res.json({
+                tables: tables.map(t => t.name),
+                structure: tableInfo,
+                reports: reports || [],
+                sessions: sessions || [],
+                stats: {
+                  totalReports: reports ? reports.length : 0,
+                  totalSessions: sessions ? sessions.length : 0,
+                  reportsByStatus: reports ? reports.reduce((acc, r) => {
+                    acc[r.status] = (acc[r.status] || 0) + 1;
+                    return acc;
+                  }, {}) : {},
+                  reportsByCategory: reports ? reports.reduce((acc, r) => {
+                    acc[r.category] = (acc[r.category] || 0) + 1;
+                    return acc;
+                  }, {}) : {}
+                }
+              });
+            }
+          });
+        });
+      });
+    });
+  });
+});
+
 // Reset WhatsApp session endpoint (for troubleshooting on Render)
 app.post('/admin/reset-whatsapp', (req, res) => {
   const adminPassword = req.body.password || req.headers['x-admin-password'];
