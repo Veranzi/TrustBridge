@@ -54,39 +54,35 @@ app.get('/', (req, res) => {
 
 // Initialize WhatsApp and start server
 async function startServer() {
-  try {
-    // Database initializes automatically when db.js is loaded
-    // Just require it to ensure it's initialized
-    require('./database/db');
-    console.log('✅ Database ready');
-    
-    // Initialize WhatsApp client
-    console.log('Initializing WhatsApp connection...');
-    await whatsappService.initialize();
-    
-    // Start Express server
-    app.listen(PORT, '0.0.0.0', () => {
-      console.log(`\n🚀 Server running on port ${PORT}`);
-      console.log(`📱 WhatsApp Status: http://localhost:${PORT}/webhook/status`);
-      console.log(`🔐 Admin API: http://localhost:${PORT}/api/admin`);
-      console.log(`📊 Admin Dashboard: http://localhost:${PORT}/admin`);
-      console.log(`\n💡 Scan the QR code above with WhatsApp to connect!`);
-      console.log(`\n🌐 To make it public, use ngrok: ngrok http ${PORT}`);
-      console.log(`   Or deploy to Railway/Render/DigitalOcean (see QUICK_DEPLOY.md)\n`);
+  // Database initializes automatically when db.js is loaded
+  // Just require it to ensure it's initialized
+  require('./database/db');
+  console.log('✅ Database ready');
+  
+  // Start Express server IMMEDIATELY (don't wait for WhatsApp)
+  // This ensures Render detects the open port
+  const server = app.listen(PORT, '0.0.0.0', () => {
+    console.log(`\n🚀 Server running on port ${PORT} (bound to 0.0.0.0)`);
+    console.log(`📱 WhatsApp Status: http://localhost:${PORT}/webhook/status`);
+    console.log(`🔐 Admin API: http://localhost:${PORT}/api/admin`);
+    console.log(`📊 Admin Dashboard: http://localhost:${PORT}/admin`);
+    console.log(`\n💡 Initializing WhatsApp connection in background...`);
+    console.log(`\n🌐 To make it public, use ngrok: ngrok http ${PORT}`);
+    console.log(`   Or deploy to Railway/Render/DigitalOcean (see QUICK_DEPLOY.md)\n`);
+  });
+  
+  // Initialize WhatsApp client in background (non-blocking)
+  whatsappService.initialize()
+    .then(() => {
+      console.log('✅ WhatsApp client initialized successfully');
+    })
+    .catch((error) => {
+      console.error('⚠️ Failed to initialize WhatsApp:', error.message);
+      console.log('⚠️ Server is running, but WhatsApp is not connected');
+      console.log('⚠️ WhatsApp will retry on next message or restart');
     });
-  } catch (error) {
-    console.error('Failed to initialize WhatsApp:', error);
-    console.log('Starting server without WhatsApp connection...');
-    
-    app.listen(PORT, '0.0.0.0', () => {
-      console.log(`\n🚀 Server running on port ${PORT} (WhatsApp not connected)`);
-      console.log(`📱 WhatsApp Status: http://localhost:${PORT}/webhook/status`);
-      console.log(`🔐 Admin API: http://localhost:${PORT}/api/admin`);
-      console.log(`📊 Admin Dashboard: http://localhost:${PORT}/admin`);
-      console.log(`\n🌐 To make it public, use ngrok: ngrok http ${PORT}`);
-      console.log(`   Or deploy to Railway/Render/DigitalOcean (see QUICK_DEPLOY.md)\n`);
-    });
-  }
+  
+  return server;
 }
 
 // Start the application
