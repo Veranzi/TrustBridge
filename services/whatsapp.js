@@ -59,17 +59,21 @@ class WhatsAppService {
           this.qrCount++;
           this.lastQRTime = Date.now();
           
-          console.log('\n📱 ==========================================');
+          console.log('\n\n📱 ==========================================');
           console.log('📱 SCAN THIS QR CODE WITH WHATSAPP');
           console.log('📱 ==========================================');
-          console.log('📱 Make sure your terminal/logs window is large enough');
-          console.log('📱 Zoom in if needed for better clarity');
-          console.log('📱 ==========================================');
-          // Generate larger, clearer QR code (no 'small' option = full size)
+          console.log('\n💡 TIPS FOR CLEAR SCANNING:');
+          console.log('   - Make sure your terminal/logs window is large enough');
+          console.log('   - Zoom in on the QR code if needed');
+          console.log('   - Ensure good lighting when scanning');
+          console.log('   - Hold phone steady, 6-12 inches away from screen');
+          console.log('\n📱 ==========================================\n');
+          // Generate larger, clearer QR code (full size for maximum clarity)
           qrcode.generate(qr, { 
-            small: false  // Use full size for better clarity
+            small: false,  // Use full size for better clarity
+            errorCorrectionLevel: 'M'  // Medium error correction for better scanning
           });
-          console.log('📱 ==========================================');
+          console.log('\n📱 ==========================================');
           console.log('💡 HOW TO SCAN:');
           console.log('   1. Open WhatsApp on your phone');
           console.log('   2. Go to Settings → Linked Devices → Link a Device');
