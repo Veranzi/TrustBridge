@@ -36,6 +36,43 @@ app.get('/health', (req, res) => {
   });
 });
 
+// Reset WhatsApp session endpoint (for troubleshooting on Render)
+app.post('/admin/reset-whatsapp', (req, res) => {
+  const adminPassword = req.body.password || req.headers['x-admin-password'];
+  if (adminPassword !== process.env.ADMIN_PASSWORD) {
+    return res.status(401).json({ error: 'Unauthorized' });
+  }
+  
+  const fs = require('fs');
+  const path = require('path');
+  const sessionPath = path.join(__dirname, 'data', 'whatsapp-session');
+  
+  try {
+    if (fs.existsSync(sessionPath)) {
+      fs.rmSync(sessionPath, { recursive: true, force: true });
+      console.log('✅ WhatsApp session cleared via admin endpoint');
+    }
+    
+    // Restart WhatsApp client
+    whatsappService.destroy().then(() => {
+      whatsappService.initialize().catch(err => {
+        console.error('Error reinitializing WhatsApp:', err);
+      });
+    });
+    
+    res.json({ 
+      success: true, 
+      message: 'WhatsApp session cleared. Check logs for new QR code.',
+      timestamp: new Date().toISOString()
+    });
+  } catch (error) {
+    res.status(500).json({ 
+      error: 'Failed to clear session', 
+      message: error.message 
+    });
+  }
+});
+
 // Root endpoint
 app.get('/', (req, res) => {
   res.send(`
