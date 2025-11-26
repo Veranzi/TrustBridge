@@ -62,7 +62,13 @@ class WhatsAppService {
           console.log('\n📱 ==========================================');
           console.log('📱 SCAN THIS QR CODE WITH WHATSAPP');
           console.log('📱 ==========================================');
-          qrcode.generate(qr, { small: true });
+          console.log('📱 Make sure your terminal/logs window is large enough');
+          console.log('📱 Zoom in if needed for better clarity');
+          console.log('📱 ==========================================');
+          // Generate larger, clearer QR code (no 'small' option = full size)
+          qrcode.generate(qr, { 
+            small: false  // Use full size for better clarity
+          });
           console.log('📱 ==========================================');
           console.log('💡 HOW TO SCAN:');
           console.log('   1. Open WhatsApp on your phone');
