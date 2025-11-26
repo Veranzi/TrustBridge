@@ -113,8 +113,10 @@ app.get('/qr-code', (req, res) => {
         <div class="container">
           <h1>📱 TrustBridge WhatsApp QR Code</h1>
           <p class="message">⏳ QR code not available yet. Please wait for WhatsApp initialization...</p>
-          <p class="message">Check server logs for initialization status.</p>
-          <p><a href="/">← Back to Home</a></p>
+          <p class="message">💡 <strong>This usually takes 1-2 minutes after server start.</strong></p>
+          <p class="message">📋 Check Render logs for QR code generation status.</p>
+          <p class="message">🔄 <strong>Refresh this page</strong> once you see "QR code stored" in the logs.</p>
+          <p style="margin-top: 20px;"><a href="/">← Back to Home</a> | <a href="/api-docs">API Docs</a></p>
         </div>
       </body>
       </html>

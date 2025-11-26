@@ -61,6 +61,7 @@ class WhatsAppService {
       this.client.on('qr', (qr) => {
         // Store QR code for web display (always update with latest)
         this.currentQR = qr;
+        console.log('✅ QR code stored for web display at /qr-code endpoint');
         
         // Only show the FIRST QR code, ignore subsequent refreshes
         if (this.qrCount === 0) {
