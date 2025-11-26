@@ -2,6 +2,8 @@ require('dotenv').config();
 const express = require('express');
 const bodyParser = require('body-parser');
 const cors = require('cors');
+const swaggerUi = require('swagger-ui-express');
+const swaggerJsdoc = require('swagger-jsdoc');
 const webhookRoutes = require('./routes/webhook');
 const adminRoutes = require('./routes/admin');
 const whatsappService = require('./services/whatsapp');
@@ -14,6 +16,44 @@ const PORT = process.env.PORT || 3000;
 app.use(cors());
 app.use(bodyParser.urlencoded({ extended: false }));
 app.use(bodyParser.json());
+
+// Swagger/OpenAPI documentation
+const swaggerOptions = {
+  definition: {
+    openapi: '3.0.0',
+    info: {
+      title: 'TrustBridge API',
+      version: '1.0.0',
+      description: 'API documentation for TrustBridge WhatsApp Bot - Kenyan Government Services Issue Reporting',
+      contact: {
+        name: 'TrustBridge Support'
+      }
+    },
+    servers: [
+      {
+        url: process.env.RENDER_URL || 'http://localhost:3000',
+        description: 'Production server'
+      }
+    ],
+    components: {
+      securitySchemes: {
+        adminPassword: {
+          type: 'apiKey',
+          in: 'header',
+          name: 'x-admin-password',
+          description: 'Admin password for authentication'
+        }
+      }
+    }
+  },
+  apis: ['./routes/*.js', './server.js']
+};
+
+const swaggerSpec = swaggerJsdoc(swaggerOptions);
+app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerSpec, {
+  customCss: '.swagger-ui .topbar { display: none }',
+  customSiteTitle: 'TrustBridge API Documentation'
+}));
 
 // Routes
 app.use('/webhook', webhookRoutes);

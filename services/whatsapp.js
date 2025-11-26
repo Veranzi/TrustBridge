@@ -59,6 +59,9 @@ class WhatsAppService {
 
       // QR Code generation - show only ONE static QR code
       this.client.on('qr', (qr) => {
+        // Store QR code for web display (always update with latest)
+        this.currentQR = qr;
+        
         // Only show the FIRST QR code, ignore subsequent refreshes
         if (this.qrCount === 0) {
           this.qrCount++;

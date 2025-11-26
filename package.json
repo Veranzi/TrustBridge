@@ -33,6 +33,8 @@
     "qrcode-terminal": "^0.12.0",
     "sharp": "^0.34.5",
     "sqlite3": "^5.1.6",
+    "swagger-jsdoc": "^6.2.8",
+    "swagger-ui-express": "^5.0.1",
     "whatsapp-web.js": "^1.23.0"
   },
   "devDependencies": {
