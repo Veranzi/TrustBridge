@@ -275,7 +275,7 @@ app.get('/', (req, res) => {
     <p style="margin-top: 20px; color: #666;">
       ${whatsappService.isClientReady() 
         ? '✅ WhatsApp is connected' 
-        : '⚠️ WhatsApp is connecting... Check server logs for QR code'}
+        : '⚠️ WhatsApp is connecting... <a href="/qr-code">Click here to scan QR code</a>'}
     </p>
   `);
 });
