@@ -8,6 +8,9 @@ class WhatsAppService {
     this.client = null;
     this.isReady = false;
     this.processedMessages = new Set(); // Track processed messages to prevent duplicates
+    this.lastQRTime = 0; // Track when last QR code was shown
+    this.qrRefreshInterval = 90000; // Minimum 90 seconds between QR code refreshes (90,000ms)
+    this.qrCount = 0; // Track QR code count
   }
 
   initialize() {
@@ -49,21 +52,55 @@ class WhatsAppService {
         },
       });
 
-      // QR Code generation
+      // QR Code generation with throttling to prevent too-fast refreshes
       this.client.on('qr', (qr) => {
-        console.log('\n📱 ==========================================');
-        console.log('📱 SCAN THIS QR CODE WITH WHATSAPP NOW!');
-        console.log('📱 ==========================================');
-        qrcode.generate(qr, { small: true });
-        console.log('📱 ==========================================');
-        console.log('💡 IMPORTANT TIPS:');
-        console.log('   1. Open WhatsApp on your phone');
-        console.log('   2. Go to Settings → Linked Devices → Link a Device');
-        console.log('   3. Point your camera at the QR code above');
-        console.log('   4. You have about 60 seconds to scan');
-        console.log('   5. QR code will auto-refresh if it expires');
-        console.log('   6. Make sure your phone has internet connection');
-        console.log('   7. If it keeps failing, delete ./data/whatsapp-session and restart\n');
+        const now = Date.now();
+        const timeSinceLastQR = now - this.lastQRTime;
+        
+        // Only show QR code if enough time has passed (90 seconds minimum)
+        if (this.lastQRTime === 0 || timeSinceLastQR >= this.qrRefreshInterval) {
+          this.qrCount++;
+          this.lastQRTime = now;
+          
+          console.log('\n📱 ==========================================');
+          console.log(`📱 QR CODE #${this.qrCount} - SCAN THIS WITH WHATSAPP NOW!`);
+          console.log('📱 ==========================================');
+          qrcode.generate(qr, { small: true });
+          console.log('📱 ==========================================');
+          console.log('💡 IMPORTANT TIPS:');
+          console.log('   1. Open WhatsApp on your phone');
+          console.log('   2. Go to Settings → Linked Devices → Link a Device');
+          console.log('   3. Point your camera at the QR code above');
+          console.log(`   4. You have 90 seconds to scan this QR code`);
+          console.log('   5. QR code will refresh after 90 seconds if not scanned');
+          console.log('   6. Make sure your phone has internet connection');
+          console.log('   7. If it keeps failing, delete ./data/whatsapp-session and restart');
+          console.log(`\n⏰ Next QR code will appear in 90 seconds if this one expires\n`);
+        } else {
+          // QR code refreshed too quickly - wait until minimum interval
+          const waitTime = Math.ceil((this.qrRefreshInterval - timeSinceLastQR) / 1000);
+          console.log(`\n⏳ QR code refreshed too quickly. Waiting ${waitTime} seconds before showing new QR code...`);
+          console.log(`💡 Current QR code is still valid - try scanning it now!\n`);
+          
+          // Schedule showing the new QR code after the wait period
+          setTimeout(() => {
+            this.qrCount++;
+            this.lastQRTime = Date.now();
+            console.log('\n📱 ==========================================');
+            console.log(`📱 NEW QR CODE #${this.qrCount} - SCAN THIS WITH WHATSAPP NOW!`);
+            console.log('📱 ==========================================');
+            qrcode.generate(qr, { small: true });
+            console.log('📱 ==========================================');
+            console.log('💡 IMPORTANT TIPS:');
+            console.log('   1. Open WhatsApp on your phone');
+            console.log('   2. Go to Settings → Linked Devices → Link a Device');
+            console.log('   3. Point your camera at the QR code above');
+            console.log(`   4. You have 90 seconds to scan this QR code`);
+            console.log('   5. QR code will refresh after 90 seconds if not scanned');
+            console.log('   6. Make sure your phone has internet connection');
+            console.log(`\n⏰ Next QR code will appear in 90 seconds if this one expires\n`);
+          }, this.qrRefreshInterval - timeSinceLastQR);
+        }
       });
 
       // Client ready
