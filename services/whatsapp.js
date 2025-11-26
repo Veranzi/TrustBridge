@@ -59,19 +59,19 @@ class WhatsAppService {
           this.qrCount++;
           this.lastQRTime = Date.now();
           
-          console.log('\n\n📱 ==========================================');
+          console.log('\n📱 ==========================================');
           console.log('📱 SCAN THIS QR CODE WITH WHATSAPP');
           console.log('📱 ==========================================');
           console.log('\n💡 TIPS FOR CLEAR SCANNING:');
-          console.log('   - Make sure your terminal/logs window is large enough');
-          console.log('   - Zoom in on the QR code if needed');
-          console.log('   - Ensure good lighting when scanning');
+          console.log('   - Ensure your terminal/logs use a monospace font');
+          console.log('   - Make sure there\'s good contrast (dark background helps)');
           console.log('   - Hold phone steady, 6-12 inches away from screen');
+          console.log('   - Ensure good lighting when scanning');
           console.log('\n📱 ==========================================\n');
-          // Generate larger, clearer QR code (full size for maximum clarity)
+          // Generate clearer QR code with optimal settings for scanning
           qrcode.generate(qr, { 
-            small: false,  // Use full size for better clarity
-            errorCorrectionLevel: 'M'  // Medium error correction for better scanning
+            small: true,  // Keep compact but clear
+            errorCorrectionLevel: 'H'  // High error correction for better reliability
           });
           console.log('\n📱 ==========================================');
           console.log('💡 HOW TO SCAN:');
