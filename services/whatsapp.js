@@ -465,26 +465,14 @@ class WhatsAppService {
         const path = require('path');
         const fs = require('fs');
         const sharp = require('sharp');
-        // Logo path: TrustLogo.png in project root (use __dirname for deployment reliability)
-        // Try multiple paths to ensure it works in different environments
-        const possiblePaths = [
-          path.join(__dirname, '../TrustLogo.png'),  // Relative to services/ directory
-          path.join(process.cwd(), 'TrustLogo.png'),  // Project root
-          path.resolve(__dirname, '../TrustLogo.png') // Absolute path
-        ];
         
-        let logoPath = null;
-        for (const possiblePath of possiblePaths) {
-          if (fs.existsSync(possiblePath)) {
-            logoPath = possiblePath;
-            console.log(`✅ Found logo at: ${logoPath}`);
-            break;
-          }
-        }
+        // Logo path: TrustLogo.png in project root
+        // __dirname is the directory where this file (whatsapp.js) is located (services/)
+        // So ../TrustLogo.png goes up one level to project root
+        const logoPath = path.join(__dirname, '..', 'TrustLogo.png');
         
-        if (!logoPath) {
-          console.warn(`⚠️ TrustLogo.png not found. Tried paths: ${possiblePaths.join(', ')}`);
-        } else if (fs.existsSync(logoPath)) {
+        if (fs.existsSync(logoPath)) {
+          console.log(`✅ Found logo at: ${logoPath}`);
           try {
             // Ensure data directory exists
             const dataDir = path.join(__dirname, '../data');
