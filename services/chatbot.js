@@ -634,8 +634,9 @@ class ChatbotService {
           });
           
           // Use AI for description prompt AFTER state is saved
+          // First confirm the subcategory selection, then ask for description
           const descriptionPrompt = await aiService.generateResponse(
-            `User selected ${selectedSubcategory} subcategory for ${report_data.category}. Ask them to describe the issue. Be brief and friendly. IMPORTANT: Do NOT mention "submitted" - we are just collecting information.`,
+            `User selected ${selectedSubcategory} subcategory for ${report_data.category}. Confirm their selection by saying "Great! You selected [subcategory]." Then ask them to describe the issue. Be brief and friendly. IMPORTANT: Do NOT mention "submitted" - we are just collecting information.`,
             {
               phone_number,
               state: 'description_prompt',
@@ -643,7 +644,7 @@ class ChatbotService {
               conversation_history: []
             }
           );
-          response = descriptionPrompt || `📝 Please describe the ${report_data.category} - ${selectedSubcategory} issue. Be as detailed as possible.`;
+          response = descriptionPrompt || `✅ *Subcategory Selected:* ${selectedSubcategory}\n\n📝 Please describe the ${report_data.category} - ${selectedSubcategory} issue. Be as detailed as possible.`;
           shouldSave = false; // Already saved above
         } else if (message.length > 10 && !parseInt(message.trim())) {
           // User typed free-form text (not a number or subcategory) - treat as description
