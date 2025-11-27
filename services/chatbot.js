@@ -1188,7 +1188,34 @@ class ChatbotService {
   }
 
 
-  // Removed static getSubcategoryMenu - all menus are now AI-generated
+  static async getSubcategoryMenu(selectedCategory, userLanguage = 'en', phone_number = null, report_data = {}) {
+    // Use AI to generate dynamic subcategory menu
+    if (aiService.model && selectedCategory.subcategories && selectedCategory.subcategories.length > 0) {
+      const subcategories = selectedCategory.subcategories.map((sub, idx) => `${idx + 1}. ${sub}`).join('\n');
+      const subcategoryPrompt = await aiService.generateResponse(
+        `User selected ${selectedCategory.name} category. Present the subcategories in a friendly way:\n${subcategories}\n\nTell them they can select by typing the subcategory name (like "${selectedCategory.subcategories[0]}" or "${selectedCategory.subcategories[1]}") or the number (1-${selectedCategory.subcategories.length}). Make it conversational. Do NOT mention "submitted".`,
+        {
+          phone_number: phone_number || 'unknown',
+          state: 'subcategory_menu',
+          report_data: { ...report_data, category: selectedCategory.name, language: userLanguage },
+          conversation_history: []
+        }
+      );
+      
+      if (subcategoryPrompt) {
+        return subcategoryPrompt;
+      }
+    }
+    
+    // Fallback if AI unavailable or no subcategories
+    if (selectedCategory.subcategories && selectedCategory.subcategories.length > 0) {
+      const subcategories = selectedCategory.subcategories.map((sub, idx) => `${idx + 1}. ${sub}`).join('\n');
+      return `📋 *${selectedCategory.name} Subcategories:*\n\n${subcategories}\n\nPlease select a subcategory by typing its name or number.`;
+    }
+    
+    // No subcategories - should not reach here, but just in case
+    return `Please describe your ${selectedCategory.name} issue.`;
+  }
 
   static async getConfirmationMessage(report_data) {
     // Validate data exists
